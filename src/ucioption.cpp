@@ -207,8 +207,10 @@ static void make_option(const string& n, int v, const SetRange& r) {
   // Print formatted parameters, ready to be copy-pasted in fishtest
   std::cout << n << ","
             << v << ","
-            << r(v).first << "," << r(v).second << ","
-            << (r(v).second - r(v).first) / 20.0 << ","
+	    << r(v).first << "," << 256 << ","
+    //<< r(v).first << "," << r(v).second << ","
+    //<< (r(v).second - r(v).first) / 20.0 << ","
+	    << 10.0 << ","
             << "0.0020"
             << std::endl;
 }
