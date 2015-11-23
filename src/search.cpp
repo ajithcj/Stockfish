@@ -68,7 +68,11 @@ namespace {
   Value futility_margin(Depth d) { return Value(200 * d); }
 
   // Futility and reductions lookup tables, initialized at startup
-  int FutilityMoveCounts[2][16];  // [improving][depth]
+  int FutilityMoveCounts[2][16] = { // [improving][depth]
+    {3, 13, 14, 18, 18, 19, 27, 28, 38, 48, 58, 63, 69, 80, 96, 103},
+    {2, 26, 23, 20, 22, 25, 42, 46, 52, 68, 79, 88, 102, 112, 132, 147}
+  };
+
   Depth Reductions[2][2][64][64]; // [pv][improving][depth][moveNumber]
 
   template <bool PvNode> Depth reduction(bool i, Depth d, int mn) {
@@ -167,11 +171,6 @@ void Search::init() {
                       Reductions[pv][imp][d][mc] += ONE_PLY;
               }
 
-  for (int d = 0; d < 16; ++d)
-  {
-      FutilityMoveCounts[0][d] = int(2.4 + 0.773 * pow(d + 0.00, 1.8));
-      FutilityMoveCounts[1][d] = int(2.9 + 1.045 * pow(d + 0.49, 1.8));
-  }
 }
 
 
