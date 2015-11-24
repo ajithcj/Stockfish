@@ -66,7 +66,7 @@ using namespace Search;
     {3, 5, 8, 12, 18, 25, 33, 42, 52, 62, 74, 87, 101, 115, 131, 147}
   };
 
-  TUNE(FutilityMoveCounts);
+TUNE(SetRange(0, 256), FutilityMoveCounts);
 
 namespace {
 

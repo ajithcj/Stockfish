@@ -202,14 +202,12 @@ static void make_option(const string& n, int v, const SetRange& r) {
   if (TuneResults.count(n))
       v = TuneResults[n];
 
-  Options[n] << UCI::Option(v, r(v).first, 256, on_tune);
+  Options[n] << UCI::Option(v, r(v).first, r(v).second, on_tune);
 
   // Print formatted parameters, ready to be copy-pasted in fishtest
   std::cout << n << ","
             << v << ","
-	    << r(v).first << "," << 256 << ","
-    //<< r(v).first << "," << r(v).second << ","
-    //<< (r(v).second - r(v).first) / 20.0 << ","
+            << r(v).first << "," << r(v).second << ","
 	    << 10.0 << ","
             << "0.0020"
             << std::endl;
