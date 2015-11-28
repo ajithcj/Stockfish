@@ -69,7 +69,7 @@ namespace {
 
   // Futility and reductions lookup tables, initialized at startup
   int FutilityMoveCounts[2][16] = { // [improving][depth]
-    {0, 1, 11, 13, 8, 16, 24, 26, 33, 33, 54, 66, 63, 83, 91, 94},
+    {0, 2, 11, 13, 8, 16, 24, 26, 33, 33, 54, 66, 63, 83, 91, 94},
     {0, 14, 15, 18, 20, 23, 31, 41, 58, 59, 68, 87, 103, 117, 136, 141}
   };
 
