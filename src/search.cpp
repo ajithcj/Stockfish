@@ -917,8 +917,7 @@ moves_loop: // When in check search starts from here
           // Move count based pruning
           if (   depth < 16 * ONE_PLY
               && moveCount >= FutilityMoveCounts[improving][depth]
-              && !(thisThread->history[pos.moved_piece(move)][to_sq(move)] > VALUE_ZERO
-		   || cmh[pos.moved_piece(move)][to_sq(move)] > VALUE_ZERO))
+              && thisThread->history[pos.moved_piece(move)][to_sq(move)] <= VALUE_ZERO)
               continue;
 
           // History based pruning
