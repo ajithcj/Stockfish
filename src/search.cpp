@@ -68,11 +68,7 @@ namespace {
   Value futility_margin(Depth d) { return Value(200 * d); }
 
   // Futility and reductions lookup tables, initialized at startup
-  int FutilityMoveCounts[2][16] = { // [improving][depth]
-    {0, 2, 11, 13, 8, 16, 24, 26, 33, 33, 54, 66, 63, 83, 91, 94},
-    {0, 14, 15, 18, 20, 23, 31, 41, 58, 59, 68, 87, 103, 117, 136, 141}
-  };
-
+  int FutilityMoveCounts[2][16];  // [improving][depth]
   Depth Reductions[2][2][64][64]; // [pv][improving][depth][moveNumber]
 
   template <bool PvNode> Depth reduction(bool i, Depth d, int mn) {
@@ -171,6 +167,11 @@ void Search::init() {
                       Reductions[pv][imp][d][mc] += ONE_PLY;
               }
 
+  for (int d = 0; d < 16; ++d)
+  {
+      FutilityMoveCounts[0][d] = int(2.4 + 0.773 * pow(d + 0.00, 1.8));
+      FutilityMoveCounts[1][d] = int(2.9 + 1.045 * pow(d + 0.49, 1.8));
+  }
 }
 
 
@@ -915,7 +916,9 @@ moves_loop: // When in check search starts from here
       {
           // Move count based pruning
           if (   depth < 16 * ONE_PLY
-              && moveCount >= FutilityMoveCounts[improving][depth])
+              && moveCount >= FutilityMoveCounts[improving][depth]
+              && !(thisThread->history[pos.moved_piece(move)][to_sq(move)] > VALUE_ZERO
+		   && cmh[pos.moved_piece(move)][to_sq(move)] > VALUE_ZERO))
               continue;
 
           // History based pruning
