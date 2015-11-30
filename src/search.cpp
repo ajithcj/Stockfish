@@ -302,7 +302,7 @@ void MainThread::search() {
   }
 
   // When playing in 'nodes as time' mode, subtract the searched nodes from
-  // the available ones before to exit.// Trial
+  // the available ones before to exit.// Trial for aws
   if (Limits.npmsec)
       Time.availableNodes += Limits.inc[us] - Threads.nodes_searched();
 
