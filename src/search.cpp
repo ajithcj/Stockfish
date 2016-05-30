@@ -423,6 +423,9 @@ void Thread::search() {
           const Row& row = HalfDensity[(idx - 1) % HalfDensitySize];
           if (row[(rootDepth + rootPos.game_ply()) % row.size()])
              continue;
+
+	  if(rootDepth <= Threads.HighestCompletedDepth)
+	    continue;
       }
 
       // Age out PV variability metric
@@ -525,7 +528,7 @@ void Thread::search() {
               sync_cout << UCI::pv(rootPos, rootDepth, alpha, beta) << sync_endl;
       }
 
-      if (!Signals.stop && rootDepth > Threads.HighestCompletedDepth)
+      if (!Signals.stop && (mainThread || rootDepth > Threads.HighestCompletedDepth))
           completedDepth = rootDepth;
 
       if (!mainThread)
@@ -641,6 +644,10 @@ namespace {
         check_time();
     }
 
+    // Quit the search if some other thread has alread searched upto our rootDepth
+    if(thisThread->rootDepth <= Threads.HighestCompletedDepth && thisThread != Threads.main())
+        return VALUE_ZERO;
+
     // Used to send selDepth info to GUI
     if (PvNode && thisThread->maxPly < ss->ply)
         thisThread->maxPly = ss->ply;
@@ -648,7 +655,7 @@ namespace {
     if (!rootNode)
     {
         // Step 2. Check for aborted search and immediate draw
-        if (Signals.stop.load(std::memory_order_relaxed) || pos.is_draw() || ss->ply >= MAX_PLY || thisThread->rootDepth <= Threads.HighestCompletedDepth)
+        if (Signals.stop.load(std::memory_order_relaxed) || pos.is_draw() || ss->ply >= MAX_PLY)
             return ss->ply >= MAX_PLY && !inCheck ? evaluate(pos)
                                                   : DrawValue[pos.side_to_move()];
 
@@ -1080,7 +1087,7 @@ moves_loop: // When in check search starts from here
       // Finished searching the move. If a stop occurred, the return value of
       // the search cannot be trusted, and we return immediately without
       // updating best move, PV and TT.
-      if (Signals.stop.load(std::memory_order_relaxed) || thisThread->rootDepth <= Threads.HighestCompletedDepth)
+      if (Signals.stop.load(std::memory_order_relaxed) || (thisThread->rootDepth <= Threads.HighestCompletedDepth && thisThread != Threads.main()))
           return VALUE_ZERO;
 
       if (rootNode)
