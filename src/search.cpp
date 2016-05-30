@@ -260,6 +260,8 @@ void MainThread::search() {
   int contempt = Options["Contempt"] * PawnValueEg / 100; // From centipawns
   DrawValue[ us] = VALUE_DRAW - Value(contempt);
   DrawValue[~us] = VALUE_DRAW + Value(contempt);
+  Threads.HighestCompletedDepth = DEPTH_ZERO;
+
 
   TB::Hits = 0;
   TB::RootInTB = false;
@@ -466,7 +468,7 @@ void Thread::search() {
               // If search has been stopped, break immediately. Sorting and
               // writing PV back to TT is safe because RootMoves is still
               // valid, although it refers to the previous iteration.
-              if (Signals.stop)
+              if (Signals.stop || (!mainThread && rootDepth <= Threads.HighestCompletedDepth))
                   break;
 
               // When failing high/low give some update (without cluttering
@@ -496,7 +498,13 @@ void Thread::search() {
                   beta = std::min(bestValue + delta, VALUE_INFINITE);
               }
               else
-                  break;
+	      {
+	          if(rootDepth > Threads.HighestCompletedDepth)
+		  {
+		      Threads.HighestCompletedDepth = rootDepth;
+		  }
+		  break;
+              }
 
               delta += delta / 4 + 5;
 
@@ -517,7 +525,7 @@ void Thread::search() {
               sync_cout << UCI::pv(rootPos, rootDepth, alpha, beta) << sync_endl;
       }
 
-      if (!Signals.stop)
+      if (!Signals.stop && rootDepth > Threads.HighestCompletedDepth)
           completedDepth = rootDepth;
 
       if (!mainThread)
@@ -640,7 +648,7 @@ namespace {
     if (!rootNode)
     {
         // Step 2. Check for aborted search and immediate draw
-        if (Signals.stop.load(std::memory_order_relaxed) || pos.is_draw() || ss->ply >= MAX_PLY)
+        if (Signals.stop.load(std::memory_order_relaxed) || pos.is_draw() || ss->ply >= MAX_PLY || thisThread->rootDepth <= Threads.HighestCompletedDepth)
             return ss->ply >= MAX_PLY && !inCheck ? evaluate(pos)
                                                   : DrawValue[pos.side_to_move()];
 
@@ -1072,7 +1080,7 @@ moves_loop: // When in check search starts from here
       // Finished searching the move. If a stop occurred, the return value of
       // the search cannot be trusted, and we return immediately without
       // updating best move, PV and TT.
-      if (Signals.stop.load(std::memory_order_relaxed))
+      if (Signals.stop.load(std::memory_order_relaxed) || thisThread->rootDepth <= Threads.HighestCompletedDepth)
           return VALUE_ZERO;
 
       if (rootNode)
