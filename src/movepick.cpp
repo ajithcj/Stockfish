@@ -73,7 +73,7 @@ MovePicker::MovePicker(const Position& p, Move ttm, Depth d, Search::Stack* s)
   assert(d > DEPTH_ZERO);
 
   Square prevSq = to_sq((ss-1)->currentMove);
-  countermove = pos.this_thread()->counterMoves[pos.piece_on(prevSq)][prevSq];
+  countermove = Threads.main()->counterMoves[pos.piece_on(prevSq)][prevSq];
 
   stage = pos.checkers() ? EVASION : MAIN_SEARCH;
   ttMove = ttm && pos.pseudo_legal(ttm) ? ttm : MOVE_NONE;
@@ -141,7 +141,7 @@ void MovePicker::score<CAPTURES>() {
 template<>
 void MovePicker::score<QUIETS>() {
 
-  const HistoryStats& history = pos.this_thread()->history;
+  const HistoryStats& history = Threads.main()->history;
 
   const CounterMoveStats* cm = (ss-1)->counterMoves;
   const CounterMoveStats* fm = (ss-2)->counterMoves;
@@ -159,7 +159,7 @@ void MovePicker::score<EVASIONS>() {
   // Try winning and equal captures ordered by MVV/LVA, then non-captures ordered
   // by history value, then bad captures and quiet moves with a negative SEE ordered
   // by SEE value.
-  const HistoryStats& history = pos.this_thread()->history;
+  const HistoryStats& history = Threads.main()->history;
   Value see;
 
   for (auto& m : *this)

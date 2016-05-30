@@ -1025,7 +1025,7 @@ moves_loop: // When in check search starts from here
           && !captureOrPromotion)
       {
           Depth r = reduction<PvNode>(improving, depth, moveCount);
-          Value val = thisThread->history[moved_piece][to_sq(move)]
+          Value val = Threads.main()->history[moved_piece][to_sq(move)]
                      +    (cmh  ? (*cmh )[moved_piece][to_sq(move)] : VALUE_ZERO)
                      +    (fmh  ? (*fmh )[moved_piece][to_sq(move)] : VALUE_ZERO)
                      +    (fmh2 ? (*fmh2)[moved_piece][to_sq(move)] : VALUE_ZERO);
@@ -1466,10 +1466,12 @@ moves_loop: // When in check search starts from here
     CounterMoveStats* fmh2 = (ss-4)->counterMoves;
     Thread* thisThread = pos.this_thread();
 
-    thisThread->history.update(pos.moved_piece(move), to_sq(move), bonus);
+    if(thisThread == Threads.main())
+      thisThread->history.update(pos.moved_piece(move), to_sq(move), bonus);
 
     if (cmh)
     {
+      if(thisThread == Threads.main())
         thisThread->counterMoves.update(pos.piece_on(prevSq), prevSq, move);
         cmh->update(pos.moved_piece(move), to_sq(move), bonus);
     }
@@ -1483,6 +1485,7 @@ moves_loop: // When in check search starts from here
     // Decrease all the other played quiet moves
     for (int i = 0; i < quietsCnt; ++i)
     {
+      if(thisThread == Threads.main())
         thisThread->history.update(pos.moved_piece(quiets[i]), to_sq(quiets[i]), -bonus);
 
         if (cmh)
