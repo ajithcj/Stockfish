@@ -191,6 +191,7 @@ namespace {
   const Score Hanging             = S(48, 27);
   const Score ThreatByPawnPush    = S(38, 22);
   const Score Unstoppable         = S( 0, 20);
+  const Score Fork                = S(50, 50);
 
   // Penalty for a bishop on a1/h1 (a8/h8 for black) which is trapped by
   // a friendly pawn on b2/g2 (b7/g7 for black). This can obviously only
@@ -448,9 +449,9 @@ namespace {
 
         // Enemy knights safe and other checks
         b = pos.attacks_from<KNIGHT>(ksq) & ei.attackedBy[Them][KNIGHT];
+
         if (b & safe)
             attackUnits += KnightCheck, score -= SafeCheck;
-
         else if (b & other)
             score -= OtherCheck;
 
@@ -478,6 +479,7 @@ namespace {
     const Square Right      = (Us == WHITE ? DELTA_NE : DELTA_SW);
     const Bitboard TRank2BB = (Us == WHITE ? Rank2BB  : Rank7BB);
     const Bitboard TRank7BB = (Us == WHITE ? Rank7BB  : Rank2BB);
+    const Square ksq = pos.square<KING>(Them);
 
     enum { Minor, Rook };
 
@@ -552,6 +554,22 @@ namespace {
        & ~ei.attackedBy[Us][PAWN];
 
     score += ThreatByPawnPush * popcount(b);
+
+    // Forks
+    Bitboard safe  = ~(ei.attackedBy[Them][ALL_PIECES] | pos.pieces(Us));
+    b = pos.attacks_from<KNIGHT>(ksq) & ei.attackedBy[Us][KNIGHT];
+
+    if (b & safe)
+    {
+        // Knight forking king and (queen, rooks, bishops or pawns)
+        Bitboard checks = b & safe;
+        Bitboard targets =   pos.pieces(Them, QUEEN, ROOK)
+                          | (pos.pieces(Them, BISHOP, PAWN) & ~ei.attackedBy[Them][PAWN]);
+        do
+           if (pos.attacks_from<KNIGHT>(pop_lsb(&checks)) & targets)
+                score += Fork;
+        while (checks);
+     }
 
     if (DoTrace)
         Trace::add(THREAT, Us, score);
