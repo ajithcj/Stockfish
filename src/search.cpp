@@ -260,6 +260,8 @@ void MainThread::search() {
   int contempt = Options["Contempt"] * PawnValueEg / 100; // From centipawns
   DrawValue[ us] = VALUE_DRAW - Value(contempt);
   DrawValue[~us] = VALUE_DRAW + Value(contempt);
+  Threads.bestThread = Threads.main();
+
 
   TB::Hits = 0;
   TB::RootInTB = false;
@@ -348,6 +350,7 @@ void MainThread::search() {
 
   // Check if there are threads with a better score than main thread
   Thread* bestThread = this;
+
   if (   !this->easyMovePlayed
       &&  Options["MultiPV"] == 1
       && !Limits.depth
@@ -458,10 +461,16 @@ void Thread::search() {
               // search the already searched PV lines are preserved.
               std::stable_sort(rootMoves.begin() + PVIdx, rootMoves.end());
 
+              // Check if there are threads with a better score than main thread
+              if (   completedDepth > Threads.bestThread->completedDepth
+                     && rootMoves[0].score > Threads.bestThread->rootMoves[0].score)
+                      Threads.bestThread = this;
+
               // Write PV back to the transposition table in case the relevant
               // entries have been overwritten during the search.
-              for (size_t i = 0; i <= PVIdx; ++i)
-                  rootMoves[i].insert_pv_in_tt(rootPos);
+	      if(Threads.bestThread == this)
+                  for (size_t i = 0; i <= PVIdx; ++i)
+                      rootMoves[i].insert_pv_in_tt(rootPos);
 
               // If search has been stopped, break immediately. Sorting and
               // writing PV back to TT is safe because RootMoves is still
@@ -684,7 +693,7 @@ namespace {
         ss->currentMove = ttMove; // Can be MOVE_NONE
 
         // If ttMove is quiet, update killers, history, counter move on TT hit
-        if (ttValue >= beta && ttMove && !pos.capture_or_promotion(ttMove) && thisThread == Threads.main())
+        if (ttValue >= beta && ttMove && !pos.capture_or_promotion(ttMove))
             update_stats(pos, ss, ttMove, depth, nullptr, 0);
 
         return ttValue;
@@ -1007,7 +1016,7 @@ moves_loop: // When in check search starts from here
           && !captureOrPromotion)
       {
           Depth r = reduction<PvNode>(improving, depth, moveCount);
-          Value val = Threads.main()->history[moved_piece][to_sq(move)]
+          Value val = thisThread->history[moved_piece][to_sq(move)]
                      +    (cmh  ? (*cmh )[moved_piece][to_sq(move)] : VALUE_ZERO)
                      +    (fmh  ? (*fmh )[moved_piece][to_sq(move)] : VALUE_ZERO)
                      +    (fmh2 ? (*fmh2)[moved_piece][to_sq(move)] : VALUE_ZERO);
@@ -1149,7 +1158,7 @@ moves_loop: // When in check search starts from here
                    :     inCheck ? mated_in(ss->ply) : DrawValue[pos.side_to_move()];
 
     // Quiet best move: update killers, history and countermoves
-    else if (bestMove && !pos.capture_or_promotion(bestMove) && thisThread == Threads.main())
+    else if (bestMove && !pos.capture_or_promotion(bestMove))
         update_stats(pos, ss, bestMove, depth, quietsSearched, quietCount);
 
     // Bonus for prior countermove that caused the fail low
