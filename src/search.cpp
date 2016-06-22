@@ -730,7 +730,7 @@ namespace {
     if (   !PvNode
         &&  depth >= 2 * ONE_PLY
         &&  eval >= beta
-        &&  ss->staticEval >= beta
+        &&  (ss->staticEval >= beta || depth >= 7)
         &&  pos.non_pawn_material(pos.side_to_move()))
     {
         ss->currentMove = MOVE_NULL;
