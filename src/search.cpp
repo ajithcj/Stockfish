@@ -730,6 +730,7 @@ namespace {
     if (   !PvNode
         &&  depth >= 2 * ONE_PLY
         &&  eval >= beta
+        &&  ss->staticEval >= beta
         &&  pos.non_pawn_material(pos.side_to_move()))
     {
         ss->currentMove = MOVE_NULL;
@@ -739,9 +740,6 @@ namespace {
 
         // Null move dynamic reduction based on depth and value
         Depth R = ((823 + 67 * depth) / 256 + std::min((eval - beta) / PawnValueMg, 3)) * ONE_PLY;
-
-        if(ss->staticEval >= beta || depth-R > ONE_PLY)
-        {
 
         pos.do_null_move(st);
         (ss+1)->skipEarlyPruning = true;
@@ -767,7 +765,6 @@ namespace {
 
             if (v >= beta)
                 return nullValue;
-        }
         }
     }
 
