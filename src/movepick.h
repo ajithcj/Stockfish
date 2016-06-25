@@ -57,7 +57,6 @@ struct Stats {
     table[pc][to] += int(v) * 32;
   }
 
-private:
   T table[PIECE_NB][SQUARE_NB];
 };
 
