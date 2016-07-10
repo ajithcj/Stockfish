@@ -764,7 +764,6 @@ namespace {
                                         :  search<NonPV>(pos, ss, beta-1, beta, depth-R, false);
             ss->skipEarlyPruning = false;
 
-	    dbg_hit_on(v < beta);
             if (v >= beta)
                 return nullValue;
         }
