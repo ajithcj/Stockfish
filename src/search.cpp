@@ -731,7 +731,7 @@ namespace {
     if (   !PvNode
         &&  depth >= 2 * ONE_PLY
         &&  eval >= beta
-        && (ss->staticEval >= beta - ((int) depth - 4) * 35)
+        && (ss->staticEval >= beta - ((int)depth * (int)depth))
         &&  pos.non_pawn_material(pos.side_to_move()))
     {
         ss->currentMove = MOVE_NULL;
@@ -764,6 +764,7 @@ namespace {
                                         :  search<NonPV>(pos, ss, beta-1, beta, depth-R, false);
             ss->skipEarlyPruning = false;
 
+	    dbg_hit_on(v < beta);
             if (v >= beta)
                 return nullValue;
         }
