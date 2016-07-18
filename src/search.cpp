@@ -58,6 +58,10 @@ using std::string;
 using Eval::evaluate;
 using namespace Search;
 
+int nmp_margin[13] = {0, -175, -140, -105, -70, -35, 0, 35, 70, 105, 140, 175, 210};
+
+TUNE(SetRange(-250, 250), nmp_margin);
+
 namespace {
 
   // Different node types, used as a template parameter
@@ -731,7 +735,7 @@ namespace {
     if (   !PvNode
         &&  depth >= 2 * ONE_PLY
         &&  eval >= beta
-        && (ss->staticEval >= beta || depth >= 12 * ONE_PLY)
+        && (ss->staticEval >= beta - nmp_margin[depth]  || depth >= 13 * ONE_PLY)
         &&  pos.non_pawn_material(pos.side_to_move()))
     {
         ss->currentMove = MOVE_NULL;
