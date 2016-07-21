@@ -225,8 +225,8 @@ namespace {
 
   int Tropism           = 7;
   TUNE(SetRange(0, 20), Tropism);
-
-
+  int W1 = 9, W2 = 21, W3 = 12, W4 = 64, M1 = 72;
+  TUNE(SetRange(0, 100), M1, W1, W2, W3, W4);
 
   // eval_init() initializes king and attack bitboards for a given color
   // adding pawn attacks. To be done at the beginning of the evaluation.
@@ -415,11 +415,12 @@ namespace {
         // number and types of the enemy's attacking pieces, the number of
         // attacked and undefended squares around our king and the quality of
         // the pawn shelter (current 'score' value).
-        attackUnits =  std::min(72, ei.kingAttackersCount[Them] * ei.kingAttackersWeight[Them])
-                     +  9 * ei.kingAdjacentZoneAttacksCount[Them]
-                     + 21 * popcount(undefended)
-                     + 12 * (popcount(b) + !!ei.pinnedPieces[Us])
-                     - 64 * !pos.count<QUEEN>(Them)
+
+        attackUnits =  std::min(M1, ei.kingAttackersCount[Them] * ei.kingAttackersWeight[Them])
+                     +  W1 * ei.kingAdjacentZoneAttacksCount[Them]
+                     + W2 * popcount(undefended)
+                     + W3 * (popcount(b) + !!ei.pinnedPieces[Us])
+                     - W4 * !pos.count<QUEEN>(Them)
                      - mg_value(score) / 8;
 
         // Analyse the enemy's safe queen contact checks. Firstly, find the
