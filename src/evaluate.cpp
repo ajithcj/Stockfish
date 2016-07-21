@@ -212,14 +212,20 @@ namespace {
   Score KingDanger[512];
 
   // KingAttackWeights[PieceType] contains king attack weights by piece type
-  const int KingAttackWeights[PIECE_TYPE_NB] = { 0, 0, 7, 5, 4, 1 };
+  int KingAttackWeights[PIECE_TYPE_NB] = { 0, 0, 7, 5, 4, 1 };
+  TUNE(SetRange(0, 40), KingAttackWeights);
 
   // Penalties for enemy's safe checks
-  const int QueenContactCheck = 89;
-  const int QueenCheck        = 62;
-  const int RookCheck         = 57;
-  const int BishopCheck       = 48;
-  const int KnightCheck       = 78;
+  int QueenContactCheck = 89;
+  int QueenCheck        = 62;
+  int RookCheck         = 57;
+  int BishopCheck       = 48;
+  int KnightCheck       = 78;
+  TUNE(SetRange(0, 200), QueenContactCheck, QueenCheck, RookCheck, BishopCheck, KnightCheck);
+
+  int Tropism           = 7;
+  TUNE(SetRange(0, 20), Tropism);
+
 
 
   // eval_init() initializes king and attack bitboards for a given color
@@ -580,7 +586,7 @@ namespace {
        | (Us == WHITE ? b >> 4 : b << 4);
 
     // Count all these squares with a single popcount
-    score += make_score(7 * popcount(b), 0);
+    score += make_score(Tropism * popcount(b), 0);
 
     if (DoTrace)
         Trace::add(THREAT, Us, score);
