@@ -409,18 +409,6 @@ namespace {
     if (ei.kingAttackersCount[Them])
     {
 
-        // King tropism: firstly, find squares that enemy attacks in the our king flank
-        b = ei.attackedBy[Them][ALL_PIECES] & KingFlank[Them][file_of(ksq)];
-
-        // Secondly, add to the bitboard the squares which enemy attacks twice in that flank
-        // but which are not protected by our pawn. Note the trick to shift away the
-        // previous attack bits to the empty part of the bitboard.
-        b =  (b & ei.attackedBy2[Them] & ~ei.attackedBy[Us][PAWN])
-           | (Them == WHITE ? b >> 4 : b << 4);
-
-        // Count all these squares with a single popcount
-        score -= make_score(7 * popcount(b), 0);
-
         // Find the attacked squares which are defended only by the king...
         undefended =   ei.attackedBy[Them][ALL_PIECES]
                     &  ei.attackedBy[Us][KING]
@@ -495,6 +483,20 @@ namespace {
         // Finally, extract the king danger score from the KingDanger[]
         // array and subtract the score from the evaluation.
         score -= KingDanger[std::max(std::min(attackUnits, 399), 0)];
+    }
+    else
+    {
+        // King tropism: firstly, find squares that enemy attacks in the our king flank
+        b = ei.attackedBy[Them][ALL_PIECES] & KingFlank[Them][file_of(ksq)];
+
+        // Secondly, add to the bitboard the squares which enemy attacks twice in that flank
+        // but which are not protected by our pawn. Note the trick to shift away the
+        // previous attack bits to the empty part of the bitboard.
+        b =  (b & ei.attackedBy2[Them] & ~ei.attackedBy[Us][PAWN])
+           | (Them == WHITE ? b >> 4 : b << 4);
+
+        // Count all these squares with a single popcount
+        score -= make_score(7 * popcount(b), 0);
     }
 
     if (DoTrace)
