@@ -212,14 +212,14 @@ namespace {
   Score KingDanger[512];
 
   // KingAttackWeights[PieceType] contains king attack weights by piece type
-  const int KingAttackWeights[PIECE_TYPE_NB] = { 0, 0, 7, 5, 4, 1 };
+  const int KingAttackWeights[PIECE_TYPE_NB] = { 0, 0, 6, 4, 5, 1 };
 
   // Penalties for enemy's safe checks
   const int QueenContactCheck = 89;
-  const int QueenCheck        = 62;
-  const int RookCheck         = 57;
-  const int BishopCheck       = 48;
-  const int KnightCheck       = 78;
+  const int QueenCheck        = 66;
+  const int RookCheck         = 68;
+  const int BishopCheck       = 46;
+  const int KnightCheck       = 73;
 
 
   // eval_init() initializes king and attack bitboards for a given color
@@ -409,11 +409,11 @@ namespace {
         // number and types of the enemy's attacking pieces, the number of
         // attacked and undefended squares around our king and the quality of
         // the pawn shelter (current 'score' value).
-        attackUnits =  std::min(72, ei.kingAttackersCount[Them] * ei.kingAttackersWeight[Them])
-                     +  9 * ei.kingAdjacentZoneAttacksCount[Them]
-                     + 21 * popcount(undefended)
-                     + 12 * (popcount(b) + !!ei.pinnedPieces[Us])
-                     - 64 * !pos.count<QUEEN>(Them)
+        attackUnits =  std::min(69, ei.kingAttackersCount[Them] * ei.kingAttackersWeight[Them])
+                     +  7 * ei.kingAdjacentZoneAttacksCount[Them]
+                     + 17 * popcount(undefended)
+                     + 11 * (popcount(b) + !!ei.pinnedPieces[Us])
+                     - 65 * !pos.count<QUEEN>(Them)
                      - mg_value(score) / 8;
 
         // Analyse the enemy's safe queen contact checks. Firstly, find the
