@@ -156,7 +156,7 @@ namespace {
   // ThreatBySafePawn[PieceType] contains bonuses according to which piece
   // type is attacked by a pawn which is protected or is not attacked.
   const Score ThreatBySafePawn[PIECE_TYPE_NB] = {
-    S(0, 0), S(0, 0), S(141, 104), S(96, 92), S(182, 183), S(168, 180) };
+    S(0, 0), S(0, 0), S(131, 94), S(86, 82), S(172, 173), S(158, 170) };
 
   // Threat[by minor/by rook][attacked PieceType] contains
   // bonuses according to which piece type attacks which one.
@@ -190,7 +190,7 @@ namespace {
   const Score TrappedRook         = S(92,  0);
   const Score SafeCheck           = S(20, 20);
   const Score OtherCheck          = S(10, 10);
-  const Score ThreatByHangingPawn = S(71, 61);
+  const Score ThreatByHangingPawn = S(90, 81);
   const Score LooseEnemies        = S( 0, 25);
   const Score WeakQueen           = S(35,  0);
   const Score Hanging             = S(48, 27);
@@ -883,7 +883,7 @@ Value Eval::evaluate(const Position& pos) {
 		| (ei.attackedBy[Us][ROOK] & pos.pieces(Them, QUEEN))
 		);
 
-  return (pos.side_to_move() == WHITE ? v : -v) + Eval::Tempo + (b == 0 ? 0 : 70); // Side to move point of view
+  return (pos.side_to_move() == WHITE ? v : -v) + Eval::Tempo + (b == 0 ? 0 : 90); // Side to move point of view
 
 }
 
