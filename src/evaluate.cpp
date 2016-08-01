@@ -156,13 +156,13 @@ namespace {
   // ThreatBySafePawn[PieceType] contains bonuses according to which piece
   // type is attacked by a pawn which is protected or is not attacked.
   const Score ThreatBySafePawn[PIECE_TYPE_NB] = {
-    S(0, 0), S(0, 0), S(176, 139), S(131, 127), S(217, 218), S(203, 215) };
+    S(0, 0), S(0, 0), S(141, 104), S(96, 92), S(182, 183), S(168, 180) };
 
   // Threat[by minor/by rook][attacked PieceType] contains
   // bonuses according to which piece type attacks which one.
   // Attacks on lesser pieces which are pawn-defended are not considered.
   const Score Threat[][PIECE_TYPE_NB] = {
-    { S(0, 0), S(0, 33), S(45, 43), S(46, 47), S(72,107), S(48,118) }, // by Minor
+    { S(0, 0), S(0, 33), S(45, 43), S(46, 47), S(48,107), S(48,118) }, // by Minor
     { S(0, 0), S(0, 25), S(40, 62), S(40, 59), S( 0, 34), S(35, 48) }  // by Rook
   };
 
@@ -875,7 +875,16 @@ Value Eval::evaluate(const Position& pos) {
       Trace::add(TOTAL, score);
   }
 
-  return (pos.side_to_move() == WHITE ? v : -v) + Eval::Tempo; // Side to move point of view
+  Color Us = pos.side_to_move();
+  Color Them = ~Us;
+  Bitboard b = ((ei.attackedBy[Us][PAWN] & (pos.pieces(Them) ^ pos.pieces(Them, PAWN)))
+		| (ei.attackedBy[Us][ALL_PIECES] & pos.pieces(Them) & ~ei.attackedBy[Them][ALL_PIECES])
+		| ((ei.attackedBy[Us][KNIGHT] | ei.attackedBy[Us][BISHOP]) & pos.pieces(Them, ROOK, QUEEN))
+		| (ei.attackedBy[Us][ROOK] & pos.pieces(Them, QUEEN))
+		);
+
+  return (pos.side_to_move() == WHITE ? v : -v) + Eval::Tempo + (b == 0 ? 0 : 70); // Side to move point of view
+
 }
 
 // Explicit template instantiations
