@@ -65,7 +65,7 @@ namespace {
 
   // Razoring and futility margin based on depth
   const int razor_margin[4] = { 483, 570, 603, 554 };
-  Value futility_margin(Depth d) { return Value(200 * d); }
+  Value futility_margin(Depth d) { return Value(150 * d); }
 
   // Futility and reductions lookup tables, initialized at startup
   int FutilityMoveCounts[2][16];  // [improving][depth]
@@ -692,9 +692,7 @@ namespace {
     }
     else
     {
-        eval = ss->staticEval =
-        (ss-1)->currentMove != MOVE_NULL ? evaluate(pos)
-                                         : -(ss-1)->staticEval + 2 * Eval::Tempo;
+        eval = ss->staticEval = evaluate(pos);
 
         tte->save(posKey, VALUE_NONE, BOUND_NONE, DEPTH_NONE, MOVE_NONE,
                   ss->staticEval, TT.generation());
@@ -729,9 +727,8 @@ namespace {
 
     // Step 8. Null move search with verification search (is omitted in PV nodes)
     if (   !PvNode
-        &&  depth >= 2 * ONE_PLY
         &&  eval >= beta
-        && (ss->staticEval >= beta || depth >= 12 * ONE_PLY)
+        && (ss->staticEval >= beta - 35 * (depth / ONE_PLY - 6) || depth >= 13 * ONE_PLY)
         &&  pos.non_pawn_material(pos.side_to_move()))
     {
         ss->currentMove = MOVE_NULL;
@@ -927,12 +924,20 @@ moves_loop: // When in check search starts from here
 
           // Futility pruning: parent node
           if (   predictedDepth < 7 * ONE_PLY
-              && ss->staticEval + futility_margin(predictedDepth) + 256 <= alpha)
+              && ss->staticEval + 256 + 200 * predictedDepth <= alpha)
               continue;
 
           // Prune moves with negative SEE at low depths
-          if (predictedDepth < 4 * ONE_PLY && pos.see_sign(move) < VALUE_ZERO)
-              continue;
+          // Prune moves with negative SEE at low depths and below a decreasing
+          // threshold at higher depths.
+          if (predictedDepth < 8 * ONE_PLY)
+          {
+              Value see_v = predictedDepth < 4 * ONE_PLY ? VALUE_ZERO
+                            : -PawnValueMg * 2 * int(predictedDepth - 3 * ONE_PLY);
+
+              if (pos.see_sign(move) < see_v)
+                  continue;
+          }
       }
 
       // Speculative prefetch as early as possible
@@ -1215,9 +1220,7 @@ moves_loop: // When in check search starts from here
                     bestValue = ttValue;
         }
         else
-            ss->staticEval = bestValue =
-            (ss-1)->currentMove != MOVE_NULL ? evaluate(pos)
-                                             : -(ss-1)->staticEval + 2 * Eval::Tempo;
+            ss->staticEval = bestValue = evaluate(pos);
 
         // Stand pat. Return immediately if static value is at least beta
         if (bestValue >= beta)
