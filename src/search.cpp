@@ -213,7 +213,6 @@ void Search::clear() {
   {
       th->history.clear();
       th->counterMoves.clear();
-      th->fromTo.clear();
   }
 
   Threads.main()->previousScore = VALUE_INFINITE;
@@ -693,9 +692,7 @@ namespace {
     }
     else
     {
-        eval = ss->staticEval =
-        (ss-1)->currentMove != MOVE_NULL ? evaluate(pos)
-                                         : -(ss-1)->staticEval + 2 * Eval::Tempo;
+        eval = ss->staticEval = evaluate(pos);
 
         tte->save(posKey, VALUE_NONE, BOUND_NONE, DEPTH_NONE, MOVE_NONE,
                   ss->staticEval, TT.generation());
@@ -968,8 +965,7 @@ moves_loop: // When in check search starts from here
           Value val = thisThread->history[moved_piece][to_sq(move)]
                      +    (cmh  ? (*cmh )[moved_piece][to_sq(move)] : VALUE_ZERO)
                      +    (fmh  ? (*fmh )[moved_piece][to_sq(move)] : VALUE_ZERO)
-                     +    (fmh2 ? (*fmh2)[moved_piece][to_sq(move)] : VALUE_ZERO)
-                     +    thisThread->fromTo.get(~pos.side_to_move(), move);
+                     +    (fmh2 ? (*fmh2)[moved_piece][to_sq(move)] : VALUE_ZERO);
 
           // Increase reduction for cut nodes
           if (cutNode)
@@ -1223,9 +1219,7 @@ moves_loop: // When in check search starts from here
                     bestValue = ttValue;
         }
         else
-            ss->staticEval = bestValue =
-            (ss-1)->currentMove != MOVE_NULL ? evaluate(pos)
-                                             : -(ss-1)->staticEval + 2 * Eval::Tempo;
+            ss->staticEval = bestValue = evaluate(pos);
 
         // Stand pat. Return immediately if static value is at least beta
         if (bestValue >= beta)
@@ -1397,8 +1391,7 @@ moves_loop: // When in check search starts from here
         ss->killers[1] = ss->killers[0];
         ss->killers[0] = move;
     }
-	
-    Color c = pos.side_to_move();
+
     Value bonus = Value((depth / ONE_PLY) * (depth / ONE_PLY) + 2 * depth / ONE_PLY - 2);
 
     Square prevSq = to_sq((ss-1)->currentMove);
@@ -1408,7 +1401,6 @@ moves_loop: // When in check search starts from here
     Thread* thisThread = pos.this_thread();
 
     thisThread->history.update(pos.moved_piece(move), to_sq(move), bonus);
-    thisThread->fromTo.update(c, move, bonus);
 
     if (cmh)
     {
@@ -1426,7 +1418,6 @@ moves_loop: // When in check search starts from here
     for (int i = 0; i < quietsCnt; ++i)
     {
         thisThread->history.update(pos.moved_piece(quiets[i]), to_sq(quiets[i]), -bonus);
-        thisThread->fromTo.update(c, quiets[i], -bonus);
 
         if (cmh)
             cmh->update(pos.moved_piece(quiets[i]), to_sq(quiets[i]), -bonus);
