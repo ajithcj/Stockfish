@@ -470,6 +470,51 @@ namespace {
         // array and subtract the score from the evaluation.
         score -= KingDanger[std::max(std::min(attackUnits, 399), 0)];
     }
+    else
+    {
+        // Analyse the safe enemy's checks which are possible on next move...
+        safe  = ~(ei.attackedBy[Us][ALL_PIECES] | pos.pieces(Them));
+
+        // safe from pawn-attacks, and not being occupied by a blocked pawn.
+        other = ~(   ei.attackedBy[Us][PAWN]
+                  | (pos.pieces(Them, PAWN) & shift_bb<Up>(pos.pieces(PAWN))));
+
+        b1 = pos.attacks_from<ROOK  >(ksq);
+        b2 = pos.attacks_from<BISHOP>(ksq);
+
+        // Enemy queen safe checks
+        if ((b1 | b2) & ei.attackedBy[Them][QUEEN] & safe)
+            score -= SafeCheck;
+
+        // For other pieces, also consider the square safe if attacked twice,
+        // and only defended by a queen.
+        safe |=  ei.attackedBy2[Them]
+               & ~(ei.attackedBy2[Us] | pos.pieces(Them))
+               & ei.attackedBy[Us][QUEEN];
+
+        // Enemy rooks safe and other checks
+        if (b1 & ei.attackedBy[Them][ROOK] & safe)
+            score -= SafeCheck;
+
+        else if (b1 & ei.attackedBy[Them][ROOK] & other)
+            score -= OtherCheck;
+
+        // Enemy bishops safe and other checks
+        if (b2 & ei.attackedBy[Them][BISHOP] & safe)
+            score -= SafeCheck;
+
+        else if (b2 & ei.attackedBy[Them][BISHOP] & other)
+            score -= OtherCheck;
+
+        // Enemy knights safe and other checks
+        b = pos.attacks_from<KNIGHT>(ksq) & ei.attackedBy[Them][KNIGHT];
+        if (b & safe)
+            score -= SafeCheck;
+
+        else if (b & other)
+            score -= OtherCheck;
+
+    }
 
     if (DoTrace)
         Trace::add(KING, Us, score);
