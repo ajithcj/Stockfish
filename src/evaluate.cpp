@@ -377,6 +377,19 @@ namespace {
   Score evaluate_pieces< true, WHITE, KING>(const Position&, EvalInfo&, Score*, const Bitboard*) { return SCORE_ZERO; }
 
 
+  const Bitboard WhiteCamp = Rank4BB | Rank5BB | Rank6BB | Rank7BB | Rank8BB;
+  const Bitboard BlackCamp = Rank5BB | Rank4BB | Rank3BB | Rank2BB | Rank1BB;
+  const Bitboard QueenSide   = FileABB | FileBBB | FileCBB | FileDBB;
+  const Bitboard CenterFiles = FileCBB | FileDBB | FileEBB | FileFBB;
+  const Bitboard KingSide    = FileEBB | FileFBB | FileGBB | FileHBB;
+
+  const Bitboard KingFlank[COLOR_NB][FILE_NB] = {
+    { QueenSide   & WhiteCamp, QueenSide & WhiteCamp, QueenSide & WhiteCamp, CenterFiles & WhiteCamp,
+      CenterFiles & WhiteCamp, KingSide  & WhiteCamp, KingSide  & WhiteCamp, KingSide    & WhiteCamp },
+    { QueenSide   & BlackCamp, QueenSide & BlackCamp, QueenSide & BlackCamp, CenterFiles & BlackCamp,
+      CenterFiles & BlackCamp, KingSide  & BlackCamp, KingSide  & BlackCamp, KingSide    & BlackCamp },
+  };
+
   // evaluate_king() assigns bonuses and penalties to a king of a given color
 
   template<Color Us, bool DoTrace>
@@ -393,7 +406,7 @@ namespace {
     Score score = ei.pi->king_safety<Us>(pos, ksq);
 
     // Main king safety evaluation
-    if (ei.kingAttackersCount[Them])
+    if ((ei.attackedBy[Them][QUEEN] | ei.attackedBy[Them][ROOK]) & KingFlank[Them][file_of(ksq)])
     {
         // Find the attacked squares which are defended only by the king...
         undefended =   ei.attackedBy[Them][ALL_PIECES]
@@ -480,19 +493,6 @@ namespace {
 
   // evaluate_threats() assigns bonuses according to the types of the attacking
   // and the attacked pieces.
-
-  const Bitboard WhiteCamp = Rank4BB | Rank5BB | Rank6BB | Rank7BB | Rank8BB;
-  const Bitboard BlackCamp = Rank5BB | Rank4BB | Rank3BB | Rank2BB | Rank1BB;
-  const Bitboard QueenSide   = FileABB | FileBBB | FileCBB | FileDBB;
-  const Bitboard CenterFiles = FileCBB | FileDBB | FileEBB | FileFBB;
-  const Bitboard KingSide    = FileEBB | FileFBB | FileGBB | FileHBB;
-
-  const Bitboard KingFlank[COLOR_NB][FILE_NB] = {
-    { QueenSide   & WhiteCamp, QueenSide & WhiteCamp, QueenSide & WhiteCamp, CenterFiles & WhiteCamp,
-      CenterFiles & WhiteCamp, KingSide  & WhiteCamp, KingSide  & WhiteCamp, KingSide    & WhiteCamp },
-    { QueenSide   & BlackCamp, QueenSide & BlackCamp, QueenSide & BlackCamp, CenterFiles & BlackCamp,
-      CenterFiles & BlackCamp, KingSide  & BlackCamp, KingSide  & BlackCamp, KingSide    & BlackCamp },
-  };
 
   template<Color Us, bool DoTrace>
   Score evaluate_threats(const Position& pos, const EvalInfo& ei) {
