@@ -406,7 +406,7 @@ namespace {
     Score score = ei.pi->king_safety<Us>(pos, ksq);
 
     // Main king safety evaluation
-    if ((ei.attackedBy[Them][QUEEN] | ei.attackedBy[Them][ROOK]) & KingFlank[Them][file_of(ksq)])
+    if (!!((ei.attackedBy[Them][QUEEN] | ei.attackedBy[Them][ROOK]) & KingFlank[Them][file_of(ksq)]))
     {
         // Find the attacked squares which are defended only by the king...
         undefended =   ei.attackedBy[Them][ALL_PIECES]
