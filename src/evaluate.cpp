@@ -571,6 +571,8 @@ namespace {
 
     score += ThreatByPawnPush * popcount(b);
 
+    if (pos.non_pawn_material(Us) >= QueenValueMg)
+    {
     // King tropism: firstly, find squares that we attack in the enemy king flank
     b = ei.attackedBy[Us][ALL_PIECES] & KingFlank[Us][file_of(pos.square<KING>(Them))];
 
@@ -581,7 +583,8 @@ namespace {
        | (Us == WHITE ? b >> 4 : b << 4);
 
     // Count all these squares with a single popcount
-    score += make_score(7 * popcount(b), 0);
+    score += make_score(8 * popcount(b), 0);
+    }
 
     if (DoTrace)
         Trace::add(THREAT, Us, score);
