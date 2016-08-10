@@ -355,6 +355,10 @@ void Thread::search() {
       mainThread->easyMovePlayed = mainThread->failedLow = false;
       mainThread->bestMoveChanges = 0;
       TT.new_search();
+      Threads.main()->previousScore = VALUE_INFINITE;
+      Threads.bestCompletedDepth = DEPTH_ZERO;
+      Threads.bestMove = MOVE_NONE;
+      Threads.bestScore = -VALUE_INFINITE;
   }
 
   size_t multiPV = Options["MultiPV"];
@@ -398,6 +402,9 @@ void Thread::search() {
               alpha = std::max(rootMoves[PVIdx].previousScore - delta,-VALUE_INFINITE);
               beta  = std::min(rootMoves[PVIdx].previousScore + delta, VALUE_INFINITE);
           }
+
+          if(rootDepth >  ONE_PLY)
+              rootMoves[0].pv[0] = Threads.bestMove;
 
           // Start with a small aspiration window and, in the case of a fail
           // high/low, re-search with a bigger window until we're not failing
@@ -470,6 +477,14 @@ void Thread::search() {
 
       if (!Signals.stop)
           completedDepth = rootDepth;
+
+      if (   (completedDepth > Threads.bestCompletedDepth && rootMoves[0].score > Threads.bestScore)
+          || (mainThread && completedDepth >= Threads.bestCompletedDepth))
+      {
+          Threads.bestCompletedDepth = completedDepth;
+          Threads.bestMove = rootMoves[0].pv[0];
+          Threads.bestScore = rootMoves[0].score;
+      }
 
       if (!mainThread)
           continue;
