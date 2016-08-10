@@ -355,7 +355,6 @@ void Thread::search() {
       mainThread->easyMovePlayed = mainThread->failedLow = false;
       mainThread->bestMoveChanges = 0;
       TT.new_search();
-      Threads.main()->previousScore = VALUE_INFINITE;
       Threads.bestCompletedDepth = DEPTH_ZERO;
       Threads.bestMove = MOVE_NONE;
       Threads.bestScore = -VALUE_INFINITE;
