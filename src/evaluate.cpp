@@ -378,6 +378,18 @@ namespace {
 
 
   // evaluate_king() assigns bonuses and penalties to a king of a given color
+  const Bitboard WhiteCamp = Rank4BB | Rank5BB | Rank6BB | Rank7BB | Rank8BB;
+  const Bitboard BlackCamp = Rank5BB | Rank4BB | Rank3BB | Rank2BB | Rank1BB;
+  const Bitboard QueenSide   = FileABB | FileBBB | FileCBB | FileDBB;
+  const Bitboard CenterFiles = FileCBB | FileDBB | FileEBB | FileFBB;
+  const Bitboard KingSide    = FileEBB | FileFBB | FileGBB | FileHBB;
+
+  const Bitboard KingFlank[COLOR_NB][FILE_NB] = {
+    { QueenSide   & WhiteCamp, QueenSide & WhiteCamp, QueenSide & WhiteCamp, CenterFiles & WhiteCamp,
+      CenterFiles & WhiteCamp, KingSide  & WhiteCamp, KingSide  & WhiteCamp, KingSide    & WhiteCamp },
+    { QueenSide   & BlackCamp, QueenSide & BlackCamp, QueenSide & BlackCamp, CenterFiles & BlackCamp,
+      CenterFiles & BlackCamp, KingSide  & BlackCamp, KingSide  & BlackCamp, KingSide    & BlackCamp },
+  };
 
   template<Color Us, bool DoTrace>
   Score evaluate_king(const Position& pos, const EvalInfo& ei) {
@@ -393,7 +405,7 @@ namespace {
     Score score = ei.pi->king_safety<Us>(pos, ksq);
 
     // Main king safety evaluation
-    if (ei.kingAttackersCount[Them])
+    if ((((ei.attackedBy[Them][QUEEN] | ei.attackedBy[Them][ROOK]) & KingFlank[Them][file_of(ksq)]) != 0) && (ei.kingAttackersCount[Them] != 0)) 
     {
         // Find the attacked squares which are defended only by the king...
         undefended =   ei.attackedBy[Them][ALL_PIECES]
@@ -470,6 +482,45 @@ namespace {
         // array and subtract the score from the evaluation.
         score -= KingDanger[std::max(std::min(attackUnits, 399), 0)];
     }
+    else
+    {
+        // Analyse the safe enemy's checks which are possible on next move...
+        safe  = ~(ei.attackedBy[Us][ALL_PIECES] | pos.pieces(Them));
+
+        // ... and some other potential checks, only requiring the square to be
+        // safe from pawn-attacks, and not being occupied by a blocked pawn.
+        other = ~(   ei.attackedBy[Us][PAWN]
+                  | (pos.pieces(Them, PAWN) & shift_bb<Up>(pos.pieces(PAWN))));
+
+        b1 = pos.attacks_from<ROOK  >(ksq);
+        b2 = pos.attacks_from<BISHOP>(ksq);
+
+        // Enemy queen safe checks
+        if ((b1 | b2) & ei.attackedBy[Them][QUEEN] & safe)
+            score -= SafeCheck;
+
+        // For other pieces, also consider the square safe if attacked twice,
+        // and only defended by a queen.
+        safe |=  ei.attackedBy2[Them]
+               & ~(ei.attackedBy2[Us] | pos.pieces(Them))
+               & ei.attackedBy[Us][QUEEN];
+
+        // Enemy rooks safe and other checks
+        if (b1 & ei.attackedBy[Them][ROOK] & safe)
+            score -= SafeCheck;
+
+        else if (b1 & ei.attackedBy[Them][ROOK] & other)
+            score -= OtherCheck;
+
+        // Enemy bishops safe and other checks
+        if (b2 & ei.attackedBy[Them][BISHOP] & safe)
+            score -= SafeCheck;
+
+        else if (b2 & ei.attackedBy[Them][BISHOP] & other)
+            score -= OtherCheck;
+
+    }
+
 
     if (DoTrace)
         Trace::add(KING, Us, score);
@@ -480,19 +531,6 @@ namespace {
 
   // evaluate_threats() assigns bonuses according to the types of the attacking
   // and the attacked pieces.
-
-  const Bitboard WhiteCamp = Rank4BB | Rank5BB | Rank6BB | Rank7BB | Rank8BB;
-  const Bitboard BlackCamp = Rank5BB | Rank4BB | Rank3BB | Rank2BB | Rank1BB;
-  const Bitboard QueenSide   = FileABB | FileBBB | FileCBB | FileDBB;
-  const Bitboard CenterFiles = FileCBB | FileDBB | FileEBB | FileFBB;
-  const Bitboard KingSide    = FileEBB | FileFBB | FileGBB | FileHBB;
-
-  const Bitboard KingFlank[COLOR_NB][FILE_NB] = {
-    { QueenSide   & WhiteCamp, QueenSide & WhiteCamp, QueenSide & WhiteCamp, CenterFiles & WhiteCamp,
-      CenterFiles & WhiteCamp, KingSide  & WhiteCamp, KingSide  & WhiteCamp, KingSide    & WhiteCamp },
-    { QueenSide   & BlackCamp, QueenSide & BlackCamp, QueenSide & BlackCamp, CenterFiles & BlackCamp,
-      CenterFiles & BlackCamp, KingSide  & BlackCamp, KingSide  & BlackCamp, KingSide    & BlackCamp },
-  };
 
   template<Color Us, bool DoTrace>
   Score evaluate_threats(const Position& pos, const EvalInfo& ei) {
@@ -571,6 +609,8 @@ namespace {
 
     score += ThreatByPawnPush * popcount(b);
 
+    if(ei.kingRing[Them])
+    {
     // King tropism: firstly, find squares that we attack in the enemy king flank
     b = ei.attackedBy[Us][ALL_PIECES] & KingFlank[Us][file_of(pos.square<KING>(Them))];
 
@@ -582,6 +622,7 @@ namespace {
 
     // Count all these squares with a single popcount
     score += make_score(7 * popcount(b), 0);
+    }
 
     if (DoTrace)
         Trace::add(THREAT, Us, score);
