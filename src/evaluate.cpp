@@ -522,6 +522,8 @@ namespace {
         b = pos.pieces(Us, PAWN) & ( ~ei.attackedBy[Them][ALL_PIECES]
                                     | ei.attackedBy[Us][ALL_PIECES]);
 
+	b &= ~(ei.attackedBy2[Them] & ~ei.attackedBy2[Us] & ~ei.attackedBy[Us][PAWN]);
+
         safeThreats = (shift_bb<Right>(b) | shift_bb<Left>(b)) & weak;
 
         if (weak ^ safeThreats)
