@@ -194,7 +194,6 @@ namespace {
   const Score LooseEnemies        = S( 0, 25);
   const Score WeakQueen           = S(35,  0);
   const Score Hanging             = S(48, 27);
-  const Score WeakPawns           = S(48, 27);
   const Score WeakPawn            = S(20, 20);
   const Score ThreatByPawnPush    = S(38, 22);
   const Score Unstoppable         = S( 0, 20);
@@ -508,7 +507,7 @@ namespace {
 
     enum { Minor, Rook };
 
-    Bitboard b, weak, defended, safeThreats, weakPawns;
+    Bitboard b, weak, defended, safeThreats, weakPawns = 0;
     Score score = SCORE_ZERO;
 
     // Small bonus if the opponent has loose pawns or pieces
@@ -521,14 +520,18 @@ namespace {
     score -= Hanging * popcount(b);
 
     // and add our pawns that can be easily captured
-    weakPawns =   (pos.pieces(Us, PAWN) & ~ei.attackedBy2[Us] & ei.attackedBy2[Them]) & ~b &// Pawns that are attacked twice but not defended twice
-                 ~( // Remove some exceptions 
-                  (ei.attackedBy[Us][PAWN] & ~ei.attackedBy[Them][PAWN])
-                | ((ei.attackedBy[Us][KNIGHT] | ei.attackedBy[Us][BISHOP]) & ~(ei.attackedBy[Them][PAWN] | ei.attackedBy[Them][KNIGHT] | ei.attackedBy[Them][BISHOP]))
-                | ((ei.attackedBy[Us][ROOK]) & ~(ei.attackedBy[Them][PAWN] | ei.attackedBy[Them][KNIGHT] | ei.attackedBy[Them][BISHOP] | ei.attackedBy[Them][ROOK]))
-		  );
+    b = (pos.pieces(Us, PAWN) & ~ei.attackedBy2[Us] & ei.attackedBy2[Them]) & ~b; // Pawns that are attacked twice but not defended twice
+    if(b)
+    {
+        weakPawns =   b &
+                     ~( // Remove some exceptions 
+                      (ei.attackedBy[Us][PAWN] & ~ei.attackedBy[Them][PAWN])
+                    | ((ei.attackedBy[Us][KNIGHT] | ei.attackedBy[Us][BISHOP]) & ~(ei.attackedBy[Them][PAWN] | ei.attackedBy[Them][KNIGHT] | ei.attackedBy[Them][BISHOP]))
+                    | ((ei.attackedBy[Us][ROOK]) & ~(ei.attackedBy[Them][PAWN] | ei.attackedBy[Them][KNIGHT] | ei.attackedBy[Them][BISHOP] | ei.attackedBy[Them][ROOK]))
+                      );
 
-    score -= WeakPawn * popcount(weakPawns);    
+        score -= WeakPawn * popcount(weakPawns);    
+    }
 
     // Non-pawn enemies attacked by a pawn
     weak = (pos.pieces(Them) ^ pos.pieces(Them, PAWN)) & ei.attackedBy[Us][PAWN];
