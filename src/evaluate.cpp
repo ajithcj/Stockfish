@@ -514,6 +514,14 @@ namespace {
         & ~(ei.attackedBy[Us][ALL_PIECES] | ei.attackedBy[Them][ALL_PIECES]))
         score += LooseEnemies;
 
+    // Find out our pawns that are hanging
+    b = pos.pieces(Us, PAWN) & ~ei.attackedBy[Us][ALL_PIECES] & ei.attackedBy[Them][ALL_PIECES] & ~ei.attackedBy[Them][PAWN];
+
+    // and add our pawns that can be easily captured
+    b |= ei.attackedBy2[Them] & ~ei.attackedBy2[Us] & ~ei.attackedBy[Us][PAWN] & ~ei.attackedBy[Them][PAWN]; 
+
+    score -= Hanging * popcount(b);    
+
     // Non-pawn enemies attacked by a pawn
     weak = (pos.pieces(Them) ^ pos.pieces(Them, PAWN)) & ei.attackedBy[Us][PAWN];
 
@@ -521,6 +529,8 @@ namespace {
     {
         b = pos.pieces(Us, PAWN) & ( ~ei.attackedBy[Them][ALL_PIECES]
                                     | ei.attackedBy[Us][ALL_PIECES]);
+
+	b &= ~(ei.attackedBy2[Them] & ~ei.attackedBy2[Us] & ~ei.attackedBy[Us][PAWN]); 
 
         safeThreats = (shift_bb<Right>(b) | shift_bb<Left>(b)) & weak;
 
@@ -550,7 +560,7 @@ namespace {
         while (b)
             score += Threat[Rook ][type_of(pos.piece_on(pop_lsb(&b)))];
 
-        score += Hanging * popcount(weak & ~ei.attackedBy[Them][ALL_PIECES]);
+        score += Hanging * popcount((weak & ~pos.pieces(Them, PAWN)) & ~ei.attackedBy[Them][ALL_PIECES]);
 
         b = weak & ei.attackedBy[Us][KING];
         if (b)
