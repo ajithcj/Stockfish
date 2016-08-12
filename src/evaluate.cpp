@@ -506,7 +506,7 @@ namespace {
 
     enum { Minor, Rook };
 
-    Bitboard b, weak, defended, safeThreats;
+    Bitboard b, weak, defended, safeThreats, weakPawns;
     Score score = SCORE_ZERO;
 
     // Small bonus if the opponent has loose pawns or pieces
@@ -514,13 +514,25 @@ namespace {
         & ~(ei.attackedBy[Us][ALL_PIECES] | ei.attackedBy[Them][ALL_PIECES]))
         score += LooseEnemies;
 
+    // Find out our pawns that are hanging
+    weakPawns = pos.pieces(Us, PAWN) & ~ei.attackedBy[Us][ALL_PIECES] & ei.attackedBy[Them][ALL_PIECES];
+
+    // and add our pawns that can be easily captured
+    weakPawns |=  (pos.pieces(Us, PAWN) & ~ei.attackedBy2[Us] & ei.attackedBy2[Them]) & // Pawns that are attacked twice but not defended twice
+                 ~( // Remove some exceptions 
+                  (ei.attackedBy[Us][PAWN] & ~ei.attackedBy[Them][PAWN])
+                | ((ei.attackedBy[Us][KNIGHT] | ei.attackedBy[Us][BISHOP]) & ~(ei.attackedBy[Them][PAWN] | ei.attackedBy[Them][KNIGHT] | ei.attackedBy[Them][BISHOP]))
+                | ((ei.attackedBy[Us][ROOK]) & ~(ei.attackedBy[Them][PAWN] | ei.attackedBy[Them][KNIGHT] | ei.attackedBy[Them][BISHOP] | ei.attackedBy[Them][ROOK]))
+		  );
+
+    score -= Hanging * popcount(weakPawns);
+
     // Non-pawn enemies attacked by a pawn
     weak = (pos.pieces(Them) ^ pos.pieces(Them, PAWN)) & ei.attackedBy[Us][PAWN];
 
     if (weak)
     {
-        b = pos.pieces(Us, PAWN) & ( ~ei.attackedBy[Them][ALL_PIECES]
-                                    | ei.attackedBy[Us][ALL_PIECES]);
+        b = pos.pieces(Us, PAWN) & ~weakPawns;
 
         safeThreats = (shift_bb<Right>(b) | shift_bb<Left>(b)) & weak;
 
@@ -550,7 +562,7 @@ namespace {
         while (b)
             score += Threat[Rook ][type_of(pos.piece_on(pop_lsb(&b)))];
 
-        score += Hanging * popcount(weak & ~ei.attackedBy[Them][ALL_PIECES]);
+        score += Hanging * popcount((weak & ~pos.pieces(Them, PAWN)) & ~ei.attackedBy[Them][ALL_PIECES]);
 
         b = weak & ei.attackedBy[Us][KING];
         if (b)
