@@ -890,7 +890,7 @@ moves_loop: // When in check search starts from here
                         && moveCount >= FutilityMoveCounts[improving][depth / ONE_PLY];
 
       // Step 12. Extend checks
-      if (    givesCheck
+      if (   (givesCheck || pos.gives_threat(move))
           && !moveCountPruning
           &&  pos.see_sign(move) >= VALUE_ZERO)
           extension = ONE_PLY;
