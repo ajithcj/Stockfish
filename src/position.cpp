@@ -576,6 +576,25 @@ bool Position::pseudo_legal(const Move m) const {
 }
 
 
+/// Position::evades_threat() tests whether a pseudo-legal move evades a threat
+
+bool Position::evades_threat(Move m) const {
+
+  if(type_of(piece_on(from_sq(m))) == PAWN) return false;
+
+  Bitboard threats = 0;  
+  Color Us = side_to_move();
+  Color Them = ~Us;
+  Bitboard b = pieces(Them, PAWN);
+
+      if(Them == WHITE)
+	threats = (shift_bb<DELTA_NE>(b) | shift_bb<DELTA_NW>(b));
+      else 
+	threats = (shift_bb<DELTA_SW>(b) | shift_bb<DELTA_SE>(b));
+
+      return((threats & from_sq(m)) != 0 && (threats & to_sq(m)) == 0);
+}
+
 /// Position::gives_check() tests whether a pseudo-legal move gives a check
 
 bool Position::gives_check(Move m) const {
