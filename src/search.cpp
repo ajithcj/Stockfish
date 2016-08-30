@@ -918,7 +918,7 @@ moves_loop: // When in check search starts from here
 
       // Update the current move (this must be done after singular extension search)
       newDepth = depth - ONE_PLY + extension;
-
+      
       // Step 13. Pruning at shallow depth
       if (   !rootNode
           && !captureOrPromotion
@@ -1016,6 +1016,9 @@ moves_loop: // When in check search starts from here
       }
       else
           doFullDepthSearch = !PvNode || moveCount > 1;
+
+      if(newDepth < ONE_PLY && !givesCheck && pos.in_threat())
+          newDepth = ONE_PLY;
 
       // Step 16. Full depth search when LMR is skipped or fails high
       if (doFullDepthSearch)
