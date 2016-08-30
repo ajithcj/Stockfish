@@ -997,6 +997,8 @@ moves_loop: // When in check search starts from here
                        && type_of(pos.piece_on(to_sq(move))) != PAWN
                        && pos.see(make_move(to_sq(move), from_sq(move))) < VALUE_ZERO)
                   r -= 2 * ONE_PLY;
+	      else if(pos.in_threat())
+                  r -= ONE_PLY;
 
               // Decrease/increase reduction for moves with a good/bad history
               Value val = thisThread->history[moved_piece][to_sq(move)]
@@ -1016,9 +1018,6 @@ moves_loop: // When in check search starts from here
       }
       else
           doFullDepthSearch = !PvNode || moveCount > 1;
-
-      if(newDepth < ONE_PLY && !givesCheck && pos.in_threat())
-          newDepth = ONE_PLY;
 
       // Step 16. Full depth search when LMR is skipped or fails high
       if (doFullDepthSearch)
