@@ -580,24 +580,17 @@ bool Position::pseudo_legal(const Move m) const {
 
 bool Position::gives_threat(Move m) const {
 
-  if(type_of(piece_on(from_sq(m))) != PAWN && type_of(piece_on(from_sq(m))) != KNIGHT) return false;
+  if(type_of(piece_on(to_sq(m))) != PAWN) return false;
 
   Bitboard threats = 0;  
-  Color Us = side_to_move();
-  Color Them = ~Us;
+  Color Them = side_to_move();
+  Color Us = ~Them;
   Bitboard b = SquareBB[to_sq(m)];
 
-  if(type_of(piece_on(from_sq(m))) == KNIGHT)
-  {
-      threats = StepAttacksBB[KNIGHT][to_sq(m)] & pieces(Them, ROOK, QUEEN);
-  }
-  else 
-  {
       if(Us == WHITE)
-          threats = (shift_bb<DELTA_NE>(b) | shift_bb<DELTA_NW>(b))	& (pieces(Them) ^ pieces(Them, PAWN));
+	threats = (shift_bb<DELTA_NE>(b) | shift_bb<DELTA_NW>(b))	& (pieces(Them) ^ pieces(Them, PAWN, KING));
       else 
-          threats = (shift_bb<DELTA_SW>(b) | shift_bb<DELTA_SE>(b))	& (pieces(Them) ^ pieces(Them, PAWN));
-  }
+	threats = (shift_bb<DELTA_SW>(b) | shift_bb<DELTA_SE>(b))	& (pieces(Them) ^ pieces(Them, PAWN, KING));
 
   return(!!threats);
 }
