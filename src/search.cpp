@@ -562,7 +562,7 @@ namespace {
     Move ttMove, move, excludedMove, bestMove;
     Depth extension, newDepth, predictedDepth;
     Value bestValue, value, ttValue, eval, nullValue;
-    bool ttHit, inCheck, givesCheck, singularExtensionNode, improving;
+    bool ttHit, inCheck, givesCheck, givesThreat, singularExtensionNode, improving;
     bool captureOrPromotion, doFullDepthSearch, moveCountPruning;
     Piece moved_piece;
     int moveCount, quietCount;
@@ -970,6 +970,8 @@ moves_loop: // When in check search starts from here
       ss->currentMove = move;
       ss->counterMoves = &CounterMoveHistory[moved_piece][to_sq(move)];
 
+      givesThreat = pos.gives_threat(move) && pos.see_sign(move) >= VALUE_ZERO;
+
       // Step 14. Make the move
       pos.do_move(move, st, givesCheck);
 
@@ -996,6 +998,8 @@ moves_loop: // When in check search starts from here
               else if (   type_of(move) == NORMAL
                        && type_of(pos.piece_on(to_sq(move))) != PAWN
                        && pos.see(make_move(to_sq(move), from_sq(move))) < VALUE_ZERO)
+                  r -= 2 * ONE_PLY;
+	      else if (givesThreat)
                   r -= 2 * ONE_PLY;
 
               // Decrease/increase reduction for moves with a good/bad history
