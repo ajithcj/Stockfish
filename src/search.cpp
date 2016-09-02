@@ -562,7 +562,7 @@ namespace {
     Move ttMove, move, excludedMove, bestMove;
     Depth extension, newDepth, predictedDepth;
     Value bestValue, value, ttValue, eval, nullValue;
-    bool ttHit, inCheck, givesCheck, singularExtensionNode, improving;
+    bool ttHit, inCheck, givesCheck, singularExtensionNode, improving, see_sign = true;
     bool captureOrPromotion, doFullDepthSearch, moveCountPruning;
     Piece moved_piece;
     int moveCount, quietCount;
@@ -970,6 +970,17 @@ moves_loop: // When in check search starts from here
       ss->currentMove = move;
       ss->counterMoves = &CounterMoveHistory[moved_piece][to_sq(move)];
 
+      // Compute see only when required
+      if (    
+	     depth >= 3 * ONE_PLY
+          &&  moveCount > 1
+          && !captureOrPromotion
+          && !cutNode	  
+          && type_of(pos.piece_on(from_sq(move))) != PAWN)
+      {
+          see_sign = pos.see(move) >= VALUE_ZERO;
+      }
+
       // Step 14. Make the move
       pos.do_move(move, st, givesCheck);
 
@@ -995,9 +1006,9 @@ moves_loop: // When in check search starts from here
               // because the destination square is empty.
               else if (   type_of(move) == NORMAL
                        && type_of(pos.piece_on(to_sq(move))) != PAWN
-                       && pos.see(make_move(to_sq(move), from_sq(move))) < VALUE_ZERO)
+                       && see_sign 
+		       && pos.see(make_move(to_sq(move), from_sq(move))) < VALUE_ZERO)
                   r -= 2 * ONE_PLY;
-
               // Decrease/increase reduction for moves with a good/bad history
               Value val = thisThread->history[moved_piece][to_sq(move)]
                          +    (cmh  ? (*cmh )[moved_piece][to_sq(move)] : VALUE_ZERO)
