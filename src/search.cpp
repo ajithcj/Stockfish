@@ -58,6 +58,10 @@ using std::string;
 using Eval::evaluate;
 using namespace Search;
 
+int F1_A = 150, F1_B = 0;
+int F2_A = 200, F2_B = 0;
+TUNE(SetRange(-400, 400), F1_A, F1_B, F2_A, F2_B);
+
 namespace {
 
   // Different node types, used as a template parameter
@@ -65,7 +69,7 @@ namespace {
 
   // Razoring and futility margin based on depth
   const int razor_margin[4] = { 483, 570, 603, 554 };
-  Value futility_margin(Depth d) { return Value(150 * d / ONE_PLY); }
+  Value futility_margin(Depth d) { return Value(F1_A * d / ONE_PLY - F1_B); }
 
   // Futility and reductions lookup tables, initialized at startup
   int FutilityMoveCounts[2][16]; // [improving][depth]
@@ -942,7 +946,7 @@ moves_loop: // When in check search starts from here
 
           // Futility pruning: parent node
           if (   predictedDepth < 7 * ONE_PLY
-              && ss->staticEval + 256 + 200 * predictedDepth / ONE_PLY <= alpha)
+              && ss->staticEval + 256 + (F2_A * predictedDepth / ONE_PLY) - F2_B <= alpha)
               continue;
 
           // Prune moves with negative SEE at low depths and below a decreasing
