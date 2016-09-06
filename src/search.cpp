@@ -885,12 +885,20 @@ moves_loop: // When in check search starts from here
                   ? pos.check_squares(type_of(pos.piece_on(from_sq(move)))) & to_sq(move)
                   : pos.gives_check(move);
 
+
       moveCountPruning =   depth < 16 * ONE_PLY
                         && moveCount >= FutilityMoveCounts[improving][depth / ONE_PLY];
 
-      // Step 12. Extend checks
+      // Step 12. Extend checks and threats
       if (    givesCheck
           && !moveCountPruning
+          &&  pos.see_sign(move) >= VALUE_ZERO)
+          extension = ONE_PLY;
+
+      if (    type_of(move) == NORMAL
+          && !moveCountPruning
+          && !givesCheck
+          &&  pos.gives_threat(move)
           &&  pos.see_sign(move) >= VALUE_ZERO)
           extension = ONE_PLY;
 

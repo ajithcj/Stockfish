@@ -571,6 +571,34 @@ bool Position::pseudo_legal(const Move m) const {
   return true;
 }
 
+/// Position::gives_threat() tests whether a pseudo-legal move by a pawn or minor
+
+bool Position::gives_threat(Move m) const {
+
+  Square from = from_sq(m);
+  Square to = to_sq(m);
+  if(type_of(piece_on(from)) >= BISHOP) return false;
+
+  Bitboard threats = 0;  
+  Color Them = ~side_to_move();
+
+  if(type_of(piece_on(from)) == PAWN)
+  {
+      Bitboard b = SquareBB[to];
+      if(Them == BLACK)
+	threats = (shift_bb<DELTA_NE>(b) | shift_bb<DELTA_NW>(b)) & (pieces(Them) ^ pieces(Them, PAWN, KING));
+      else 
+	threats = (shift_bb<DELTA_SW>(b) | shift_bb<DELTA_SE>(b)) & (pieces(Them) ^ pieces(Them, PAWN, KING));
+
+  }
+  else if(type_of(piece_on(from)) == KNIGHT)
+  {
+      threats = StepAttacksBB[KNIGHT][to] & pieces(Them, ROOK, QUEEN);
+  }
+
+  return(!!threats);
+}
+
 
 /// Position::gives_check() tests whether a pseudo-legal move gives a check
 
