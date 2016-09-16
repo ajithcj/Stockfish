@@ -572,6 +572,22 @@ bool Position::pseudo_legal(const Move m) const {
 }
 
 
+/// Position::gives_threat() tests whether a pseudo-legal move by a pawn, minor or ROOK
+
+bool Position::gives_threat(Move m) const {
+  Square to = to_sq(m);
+  Piece pc = piece_on(to);
+  Color c = side_to_move();
+  if(type_of(pc) >= QUEEN) return false; 
+
+  Bitboard targets[PIECE_TYPE_NB] = {0, pieces(c) ^ pieces(c, PAWN, KING), pieces(c, ROOK, QUEEN), pieces(c, ROOK, QUEEN), pieces(c, QUEEN)};
+  Bitboard attacks = type_of(pc) == BISHOP ? attacks_bb<BISHOP>(to, pieces())
+                   : type_of(pc) ==   ROOK ? attacks_bb<  ROOK>(to, pieces())
+                   : StepAttacksBB[pc][to];
+
+  return !!(attacks & targets[type_of(pc)]);
+}
+
 /// Position::gives_check() tests whether a pseudo-legal move gives a check
 
 bool Position::gives_check(Move m) const {
