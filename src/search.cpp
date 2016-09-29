@@ -59,6 +59,13 @@ using std::string;
 using Eval::evaluate;
 using namespace Search;
 
+int A = 35;
+int B = 6;
+int C = 0;
+TUNE(SetRange(-100, 100), A);
+TUNE(SetRange(-10, 10), B);
+TUNE(SetRange(0, 200), C);
+
 namespace {
 
   // Different node types, used as a template parameter
@@ -743,6 +750,7 @@ namespace {
         &&  depth < 7 * ONE_PLY
         &&  eval - futility_margin(depth) >= beta
         &&  eval < VALUE_KNOWN_WIN  // Do not return unproven wins
+	   && (ss->staticEval >= (beta - (A * (depth / ONE_PLY - B)) + C))
         &&  pos.non_pawn_material(pos.side_to_move()))
         return eval - futility_margin(depth);
 
