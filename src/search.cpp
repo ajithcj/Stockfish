@@ -743,6 +743,7 @@ namespace {
         &&  depth < 7 * ONE_PLY
         &&  eval - futility_margin(depth) >= beta
         &&  eval < VALUE_KNOWN_WIN  // Do not return unproven wins
+        && (ss->staticEval >= beta - 35 * (depth / ONE_PLY - 6))
         &&  pos.non_pawn_material(pos.side_to_move()))
         return eval - futility_margin(depth);
 
