@@ -560,10 +560,10 @@ namespace {
     TTEntry* tte;
     Key posKey;
     Move ttMove, move, excludedMove, bestMove;
-    Depth extension, newDepth;
+    Depth extension, newDepth, fpDepth;
     Value bestValue, value, ttValue, eval, nullValue;
     bool ttHit, inCheck, givesCheck, singularExtensionNode, improving;
-    bool captureOrPromotion, doFullDepthSearch, moveCountPruning;
+    bool captureOrPromotion, doFullDepthSearch, moveCountPruning, eval_from_tt = false;
     Piece moved_piece;
     int moveCount, quietCount;
 
@@ -707,7 +707,7 @@ namespace {
         // Can ttValue be used as a better position evaluation?
         if (ttValue != VALUE_NONE)
             if (tte->bound() & (ttValue > eval ? BOUND_LOWER : BOUND_UPPER))
-                eval = ttValue;
+                {eval = ttValue; eval_from_tt = true;}
     }
     else
     {
@@ -739,9 +739,12 @@ namespace {
     }
 
     // Step 7. Futility pruning: child node (skipped when in check)
+    if(depth < 7)
+        fpDepth = eval_from_tt ? depth - (std::min(std::max(DEPTH_ZERO, tte->depth()), depth)) : depth;
+
     if (   !rootNode
         &&  depth < 7 * ONE_PLY
-        &&  eval - futility_margin(depth) >= beta
+        &&  eval - futility_margin(fpDepth) >= beta
         &&  eval < VALUE_KNOWN_WIN  // Do not return unproven wins
         &&  pos.non_pawn_material(pos.side_to_move()))
         return eval - futility_margin(depth);
