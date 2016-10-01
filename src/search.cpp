@@ -747,7 +747,7 @@ namespace {
         &&  eval - futility_margin(fpDepth) >= beta
         &&  eval < VALUE_KNOWN_WIN  // Do not return unproven wins
         &&  pos.non_pawn_material(pos.side_to_move()))
-        return eval - futility_margin(depth);
+        return eval - futility_margin(fpDepth);
 
     // Step 8. Null move search with verification search (is omitted in PV nodes)
     if (   !PvNode
