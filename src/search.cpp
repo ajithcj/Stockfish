@@ -563,7 +563,7 @@ namespace {
     Depth extension, newDepth;
     Value bestValue, value, ttValue, eval, nullValue;
     bool ttHit, inCheck, givesCheck, singularExtensionNode, improving;
-    bool captureOrPromotion, doFullDepthSearch, moveCountPruning;
+    bool captureOrPromotion, doFullDepthSearch, moveCountPruning, eval_from_tt = false;
     Piece moved_piece;
     int moveCount, quietCount;
 
@@ -707,7 +707,7 @@ namespace {
         // Can ttValue be used as a better position evaluation?
         if (ttValue != VALUE_NONE)
             if (tte->bound() & (ttValue > eval ? BOUND_LOWER : BOUND_UPPER))
-                eval = ttValue;
+                {eval = ttValue; eval_from_tt = true;}
     }
     else
     {
@@ -791,6 +791,7 @@ namespace {
     // much above beta, we can (almost) safely prune the previous move.
     if (   !PvNode
         &&  depth >= 5 * ONE_PLY
+        && ((eval_from_tt = false) || (eval >= beta + 200))
         &&  abs(beta) < VALUE_MATE_IN_MAX_PLY)
     {
         Value rbeta = std::min(beta + 200, VALUE_INFINITE);
