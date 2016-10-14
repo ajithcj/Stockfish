@@ -564,7 +564,8 @@ namespace {
         score += Hanging * popcount(weak & ~ei.attackedBy[Them][ALL_PIECES]);
 
 	b = weak & pos.pieces(Them, PAWN) & ei.attackedBy[Them][ALL_PIECES] & ~ei.attackedBy2[Them] & ei.attackedBy2[Us] & (ei.attackedBy[Us][KNIGHT] | ei.attackedBy[Us][BISHOP]);
-        score += WeakPawn;
+	if(b)
+            score += WeakPawn;
 
         b = weak & ei.attackedBy[Us][KING];
         if (b)
