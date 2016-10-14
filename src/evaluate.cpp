@@ -828,8 +828,8 @@ Value Eval::evaluate(const Position& pos) {
   Score wthreats, bthreats;
   wthreats =  evaluate_threats<WHITE, DoTrace>(pos, ei);
   bthreats =  evaluate_threats<BLACK, DoTrace>(pos, ei);
-  wthreats = make_score(std::min(mg_value(wthreats), (Value)250), std::min(eg_value(wthreats), (Value)300));
-  bthreats = make_score(std::min(mg_value(bthreats), (Value)250), std::min(eg_value(bthreats), (Value)300));
+  wthreats = make_score(std::min(mg_value(wthreats), (Value)300), std::min(eg_value(wthreats), (Value)370));
+  bthreats = make_score(std::min(mg_value(bthreats), (Value)300), std::min(eg_value(bthreats), (Value)370));
 
   score += wthreats - bthreats;
 
