@@ -196,7 +196,7 @@ namespace {
   const Score LooseEnemies        = S( 0, 25);
   const Score WeakQueen           = S(35,  0);
   const Score Hanging             = S(48, 27);
-  const Score WeakPawn            = S(15,  0);
+  const Score WeakPawn            = S(10,  0);
   const Score ThreatByPawnPush    = S(38, 22);
   const Score Unstoppable         = S( 0, 20);
 
@@ -563,7 +563,7 @@ namespace {
 
         score += Hanging * popcount(weak & ~ei.attackedBy[Them][ALL_PIECES]);
 
-	b = weak & pos.pieces(Them, PAWN) & ei.attackedBy[Them][ALL_PIECES] & ~ei.attackedBy2[Them] & ei.attackedBy2[Us] & (ei.attackedBy[Us][KNIGHT] | ei.attackedBy[Us][BISHOP]);
+	b = weak & pos.pieces(Them, PAWN) & ei.attackedBy[Them][ALL_PIECES] & ~ei.attackedBy2[Them] & ei.attackedBy2[Us] & (ei.attackedBy[Us][KNIGHT] | ei.attackedBy[Us][BISHOP]) & ~ei.attackedBy[Us][PAWN];
 	if(b)
             score += WeakPawn;
 
