@@ -758,7 +758,7 @@ namespace {
         // Null move dynamic reduction based on depth and value
         Depth R = ((823 + 67 * depth / ONE_PLY) / 256 + std::min((eval - beta) / PawnValueMg, 3)) * ONE_PLY;
 
-        if((((depth-R) >= ONE_PLY) && (depth >= 13*ONE_PLY || ss->staticEval >= beta - 110)) || (ss->staticEval >= beta + 150)) 
+        if((((depth-R) >= ONE_PLY) && (depth >= 13*ONE_PLY || ss->staticEval >= beta - 200)) || (ss->staticEval >= beta + 150)) 
         {
         pos.do_null_move(st);
         (ss+1)->skipEarlyPruning = true;
