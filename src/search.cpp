@@ -539,6 +539,13 @@ void Thread::search() {
 }
 
 
+    int C1 = 20;
+    int D1 = 6;
+    int C2 = 50;
+    int C3 = 0;
+TUNE(SetRange(0,200), C1, C2, C3);
+TUNE(SetRange(0,20), D1);
+
 namespace {
 
   // search<>() is the main search function for both PV and non-PV nodes
@@ -743,12 +750,11 @@ namespace {
         &&  eval - futility_margin(depth) >= beta
         &&  eval < VALUE_KNOWN_WIN  // Do not return unproven wins
         &&  pos.non_pawn_material(pos.side_to_move()))
-        return eval - futility_margin(depth);
+        return eval;
 
     // Step 8. Null move search with verification search (is omitted in PV nodes)
     if (   !PvNode
         &&  eval >= beta
-        && (ss->staticEval >= beta - 35 * (depth / ONE_PLY - 6) || depth >= 13 * ONE_PLY)
         &&  pos.non_pawn_material(pos.side_to_move()))
     {
         ss->currentMove = MOVE_NULL;
@@ -759,6 +765,8 @@ namespace {
         // Null move dynamic reduction based on depth and value
         Depth R = ((823 + 67 * depth / ONE_PLY) / 256 + std::min((eval - beta) / PawnValueMg, 3)) * ONE_PLY;
 
+        if( (((depth-R) >= ONE_PLY) &&  ss->staticEval >= beta - C1 *(depth/ONE_PLY - D1)) || (ss->staticEval >= beta + C2 + C3*depth/ONE_PLY) || (depth >= 13 * ONE_PLY))
+        {
         pos.do_null_move(st);
         (ss+1)->skipEarlyPruning = true;
         nullValue = depth-R < ONE_PLY ? -qsearch<NonPV, false>(pos, ss+1, -beta, -beta+1, DEPTH_ZERO)
@@ -784,6 +792,7 @@ namespace {
             if (v >= beta)
                 return nullValue;
         }
+	}
     }
 
     // Step 9. ProbCut (skipped when in check)
