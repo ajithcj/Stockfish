@@ -543,7 +543,8 @@ void Thread::search() {
     int D1 = 6;
     int C2 = 50;
     int C3 = 0;
-TUNE(SetRange(0,200), C1, C2, C3);
+TUNE(SetRange(0,200), C1, C2);
+TUNE(SetRange(-100,100), C3);
 TUNE(SetRange(0,20), D1);
 
 namespace {
