@@ -748,7 +748,6 @@ namespace {
     // Step 8. Null move search with verification search (is omitted in PV nodes)
     if (   !PvNode
         &&  eval >= beta
-        && (ss->staticEval >= beta - 35 * (depth / ONE_PLY - 6) || depth >= 13 * ONE_PLY)
         &&  pos.non_pawn_material(pos.side_to_move()))
     {
         ss->currentMove = MOVE_NULL;
@@ -759,6 +758,8 @@ namespace {
         // Null move dynamic reduction based on depth and value
         Depth R = ((823 + 67 * depth / ONE_PLY) / 256 + std::min((eval - beta) / PawnValueMg, 3)) * ONE_PLY;
 
+	if((((depth-R) >= ONE_PLY) &&  ss->staticEval >= beta) || (ss->staticEval >= (beta + 50 + 50*depth/ONE_PLY)) || (depth >= 13 * ONE_PLY)) 
+        {
         pos.do_null_move(st);
         (ss+1)->skipEarlyPruning = true;
         nullValue = depth-R < ONE_PLY ? -qsearch<NonPV, false>(pos, ss+1, -beta, -beta+1, DEPTH_ZERO)
@@ -783,6 +784,7 @@ namespace {
 
             if (v >= beta)
                 return nullValue;
+        }
         }
     }
 
