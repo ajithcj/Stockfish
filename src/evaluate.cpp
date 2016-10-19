@@ -825,8 +825,13 @@ Value Eval::evaluate(const Position& pos) {
           - evaluate_king<BLACK, DoTrace>(pos, ei);
 
   // Evaluate tactical threats, we need full attack information including king
-  score +=  evaluate_threats<WHITE, DoTrace>(pos, ei)
-          - evaluate_threats<BLACK, DoTrace>(pos, ei);
+  Score wthreats, bthreats;
+  wthreats =  evaluate_threats<WHITE, DoTrace>(pos, ei);
+  bthreats =  evaluate_threats<BLACK, DoTrace>(pos, ei);
+  wthreats = make_score(std::min(mg_value(wthreats), (Value)280), std::min(eg_value(wthreats), (Value)320));
+  bthreats = make_score(std::min(mg_value(bthreats), (Value)280), std::min(eg_value(bthreats), (Value)320));
+
+  score += wthreats - bthreats;
 
   // Evaluate passed pawns, we need full attack information including king
   score +=  evaluate_passed_pawns<WHITE, DoTrace>(pos, ei)
