@@ -59,6 +59,14 @@ using std::string;
 using Eval::evaluate;
 using namespace Search;
 
+  int FutilityMoveCounts[2][16] = {
+    {2, 3, 5, 7, 11, 16, 21, 28, 35, 42, 51, 60, 70, 80, 91, 103},
+    {3, 5, 8, 12, 18, 25, 33, 42, 52, 62, 74, 87, 101, 115, 131, 147}
+  };
+
+
+TUNE(SetRange(1, 160), FutilityMoveCounts);
+
 namespace {
 
   // Different node types, used as a template parameter
@@ -69,7 +77,6 @@ namespace {
   Value futility_margin(Depth d) { return Value(150 * d / ONE_PLY); }
 
   // Futility and reductions lookup tables, initialized at startup
-  int FutilityMoveCounts[2][16]; // [improving][depth]
   int Reductions[2][2][64][64];  // [pv][improving][depth][moveNumber]
 
   template <bool PvNode> Depth reduction(bool i, Depth d, int mn) {
@@ -743,7 +750,7 @@ namespace {
         &&  eval - futility_margin(depth) >= beta
         &&  eval < VALUE_KNOWN_WIN  // Do not return unproven wins
         &&  pos.non_pawn_material(pos.side_to_move()))
-        return eval - futility_margin(depth);
+        return eval;
 
     // Step 8. Null move search with verification search (is omitted in PV nodes)
     if (   !PvNode
