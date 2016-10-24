@@ -834,7 +834,7 @@ moves_loop: // When in check search starts from here
 
     MovePicker mp(pos, ttMove, depth, ss);
     value = bestValue; // Workaround a bogus 'uninitialized' warning under gcc
-    improving =   ((ss->staticEval >= (ss-2)->staticEval) && (-(ss-1)->staticEval >= (ss-2)->staticEval))
+    improving =   ((ss->staticEval >= (ss-2)->staticEval) && ((-(ss-1)->staticEval >= ((ss-2)->staticEval - 40)) || (ss-1)->staticEval == VALUE_NONE))
                || ss->staticEval == VALUE_NONE
                || (ss-2)->staticEval == VALUE_NONE;
 
