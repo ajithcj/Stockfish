@@ -69,6 +69,8 @@ namespace {
 
   // Futility and reductions lookup tables, initialized at startup
   int FutilityMoveCounts[2][16]; // [improving][depth]
+  int fmc_range[16], fmc_mean[16];
+  int fmc[2][32][16];
   int Reductions[2][2][64][64];  // [pv][improving][depth][moveNumber]
 
   template <bool PvNode> Depth reduction(bool i, Depth d, int mn) {
@@ -198,6 +200,15 @@ void Search::init() {
   {
       FutilityMoveCounts[0][d] = int(2.4 + 0.773 * pow(d + 0.00, 1.8));
       FutilityMoveCounts[1][d] = int(2.9 + 1.045 * pow(d + 0.49, 1.8));
+      fmc_mean[d] = (FutilityMoveCounts[1][d] + FutilityMoveCounts[0][d])/2;
+      fmc_range[d] = (FutilityMoveCounts[1][d] - FutilityMoveCounts[0][d]);
+      for(int evaldiff=0;evaldiff<=12;evaldiff++){
+      for(int imp=0;imp<=1;imp++)
+      {
+	fmc[imp][evaldiff][d] = fmc_mean[d] +  (((imp == 0) ? -evaldiff*fmc_range[d] : evaldiff*fmc_range[d])/24);
+      }
+
+      }
   }
 }
 
@@ -839,6 +850,14 @@ moves_loop: // When in check search starts from here
             /* || ss->staticEval == VALUE_NONE Already implicit in the previous condition */
                ||(ss-2)->staticEval == VALUE_NONE;
 
+    int final_fmc;
+    int improvement = abs(ss->staticEval - (ss-2)->staticEval + 3);
+
+    if(ss->staticEval == VALUE_NONE || (ss-2)->staticEval == VALUE_NONE || improvement > 12)
+      final_fmc = FutilityMoveCounts[improving][depth];
+    else
+      final_fmc = fmc[improving][improvement][depth];
+
     singularExtensionNode =   !rootNode
                            &&  depth >= 8 * ONE_PLY
                            &&  ttMove != MOVE_NONE
@@ -882,7 +901,7 @@ moves_loop: // When in check search starts from here
                   : pos.gives_check(move);
 
       moveCountPruning =   depth < 16 * ONE_PLY
-                        && moveCount >= FutilityMoveCounts[improving][depth / ONE_PLY];
+                        && moveCount >= final_fmc;
 
       // Step 12. Extend checks
       if (    givesCheck
