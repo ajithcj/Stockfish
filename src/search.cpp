@@ -202,10 +202,10 @@ void Search::init() {
       FutilityMoveCounts[1][d] = int(2.9 + 1.045 * pow(d + 0.49, 1.8));
       fmc_mean[d] = (FutilityMoveCounts[1][d] + FutilityMoveCounts[0][d])/2;
       fmc_range[d] = (FutilityMoveCounts[1][d] - FutilityMoveCounts[0][d]);
-      for(int evaldiff=0;evaldiff<=12;evaldiff++){
+      for(int evaldiff=0;evaldiff<=16;evaldiff++){
       for(int imp=0;imp<=1;imp++)
       {
-	fmc[imp][evaldiff][d] = fmc_mean[d] +  (((imp == 0) ? -evaldiff*fmc_range[d] : evaldiff*fmc_range[d])/24);
+	fmc[imp][evaldiff][d] = fmc_mean[d] +  (((imp == 0) ? -evaldiff*fmc_range[d] : evaldiff*fmc_range[d])/32);
       }
 
       }
@@ -851,9 +851,9 @@ moves_loop: // When in check search starts from here
                ||(ss-2)->staticEval == VALUE_NONE;
 
     int final_fmc;
-    int improvement = abs(ss->staticEval - (ss-2)->staticEval + 3);
+    int improvement = abs(ss->staticEval - (ss-2)->staticEval + 4);
 
-    if(ss->staticEval == VALUE_NONE || (ss-2)->staticEval == VALUE_NONE || improvement > 12)
+    if(ss->staticEval == VALUE_NONE || (ss-2)->staticEval == VALUE_NONE || improvement > 16)
       final_fmc = FutilityMoveCounts[improving][depth];
     else
       final_fmc = fmc[improving][improvement][depth];
