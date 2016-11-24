@@ -70,7 +70,9 @@ namespace {
   // Futility and reductions lookup tables, initialized at startup
   int FutilityMoveCounts[2][16]; // [improving][depth]
   int Reductions[2][2][64][64];  // [pv][improving][depth][moveNumber]
-
+  // Static Eval change limit used to select upper or lower FMC limit
+  const int improving_limit = 100;
+  
   template <bool PvNode> Depth reduction(bool i, Depth d, int mn) {
     return Reductions[PvNode][i][std::min(d / ONE_PLY, 63)][std::min(mn, 63)] * ONE_PLY;
   }
@@ -559,7 +561,7 @@ namespace {
     bool ttHit, inCheck, givesCheck, singularExtensionNode, improving;
     bool captureOrPromotion, doFullDepthSearch, moveCountPruning;
     Piece moved_piece;
-    int moveCount, quietCount;
+    int moveCount, quietCount, final_fmc = 0;
 
     // Step 1. Initialize node
     Thread* thisThread = pos.this_thread();
@@ -839,6 +841,23 @@ moves_loop: // When in check search starts from here
             /* || ss->staticEval == VALUE_NONE Already implicit in the previous condition */
                ||(ss-2)->staticEval == VALUE_NONE;
 
+
+    if(depth < 16 * ONE_PLY)
+    {
+         int improvement = abs(ss->staticEval - ((ss-2)->staticEval - 20));
+         final_fmc = FutilityMoveCounts[improving][depth];
+
+         if(ss->staticEval == VALUE_NONE || (ss-2)->staticEval == VALUE_NONE || improvement >= improving_limit)
+             final_fmc = FutilityMoveCounts[improving][depth];
+         else
+         {
+             if(improving == 0)
+                 final_fmc =  (FutilityMoveCounts[1][depth] + FutilityMoveCounts[0][depth])/2 - improvement*(FutilityMoveCounts[1][depth] - FutilityMoveCounts[0][depth])/(improving_limit*2);
+             else
+                 final_fmc =  (FutilityMoveCounts[1][depth] + FutilityMoveCounts[0][depth])/2 + improvement*(FutilityMoveCounts[1][depth] - FutilityMoveCounts[0][depth])/(improving_limit*2);
+         }
+    }
+    
     singularExtensionNode =   !rootNode
                            &&  depth >= 8 * ONE_PLY
                            &&  ttMove != MOVE_NONE
@@ -882,7 +901,7 @@ moves_loop: // When in check search starts from here
                   : pos.gives_check(move);
 
       moveCountPruning =   depth < 16 * ONE_PLY
-                        && moveCount >= FutilityMoveCounts[improving][depth / ONE_PLY];
+                        && moveCount >= final_fmc;
 
       // Step 12. Extend checks
       if (    givesCheck
